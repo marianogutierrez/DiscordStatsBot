@@ -44,10 +44,8 @@ class Help(commands.Cog):
 
             embed_msg.add_field(name="Category: " + cog, value=command_text, inline=False)
 
-            print("Added all the cogs in the cog list.")
         await ctx.send(embed=embed_msg)
 
-        print("sent the first mf, now why doenst the next work?")
         embed_msg2 = discord.Embed(title="Help Command",
                             description=self.bot.description,
                             color=self.hex_color_code)

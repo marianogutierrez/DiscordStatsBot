@@ -6,13 +6,9 @@
 # This data will be obtained from the json that it will load and dump onto.
 
 # statsbot.py
-#TODO: Refactor loop to use the on_member_change function instead. This would
-# Be more accurate. 
-# No need to have locks, but it might be helpful later on to include them
-# as if more fucntionality is added, then having locks will
-# ensure there are no race conditions. 
 
 # Standard Library Imports 
+from datetime import datetime
 import os
 import logging
 import json
@@ -21,9 +17,7 @@ import time
 
 # Third party Imports
 import discord
-from discord import activity
-from discord.enums import ActivityType
-from discord.ext import commands, tasks
+from discord.ext import commands
 from dotenv import load_dotenv
 
 # Local Module imports 
@@ -93,13 +87,11 @@ async def on_ready():
     #record_stats.start() 
 # Main tasks below:
 
-def is_user_registered(*, ctx=None, member=None) -> bool:
+def is_user_registered(member=None) -> bool:
     """ Helper function:
         Returns true if a user is in a guild given the context.
 
-        The function works with just a discord member passed in,
-        or if a user was passed in a mention in a message made 
-        from a user, in which case we use the context.
+        The function works with just a discord member passed in
     """
     if member is not None:
         if member.id in registered_users:
@@ -107,110 +99,84 @@ def is_user_registered(*, ctx=None, member=None) -> bool:
         else: 
             return False
 
-    if ctx is not None:
-        userlookup_id = ctx.message.mentions[0].id
-        if userlookup_id not in registered_users:
-            return False
-        return True
-
-            
-# @tasks.loop(seconds=15)
-# async def record_stats():
-#     """ This function is the heart of the bot. We periodically grab data 
-#         from the server. The rate can be adjusted, but for now it will be every
-#         'X, Y, Z' secs, mins, or hours. A cron job, or an amazon ECS instance 
-#         could be used to better manage the uptime of the bot.
-#     """
-#     guild = discord.utils.get(bot.guilds, name=GUILD)
-#     member_list = [member for member in guild.members if member.id in registered_users]
-#     for discord_member in member_list:
-#         current_user = registered_users[discord_member.id] # User with stats pack
-#         # logger.info("Entered for for each loop in member list. "
-#         #             "I.e. there exists registered users.")
-#         # logger.info("Current Member: " + 
-#         #             str(discord_member) + str(discord_member.web_status))
-#         # logger.info("User's current activity " 
-#         #            + str(discord_member.activity))
-#         if (discord_member.activity is not None and discord_member.activity.type 
-#                 == discord.ActivityType.playing):
-#             current_game = discord_member.activity
-#             # Pass datetime in which discord records you started playing. 
-#             current_date = current_game.start
-#             if current_user.previously_played(current_game.name):
-#                 current_user.update_game_stats(current_game, current_date)
-#                 record_to_json() 
-#                 if current_user.is_game_marked(current_game.name):
-#                     game_descript = ("You have launched the marked game: " 
-#                                     + current_game.name + "!")
-#                     embed_msg = discord.Embed(title="Alert!", 
-#                                   description=game_descript,
-#                                   color=hex_color_code)
-
-#                     embed_msg.set_thumbnail(url = discord_member.avatar_url)
-#                     # The [0] idx is the first text channel found,
-#                     # but this can be sent to general chat etc. 
-#                     await guild.text_channels[0].send(embed=embed_msg)
-#             else:
-#                 current_user.init_game_stats(current_game, current_date, False)
-#                 record_to_json()
-
 # this begs the question...
 # TODO: do I even need the function above if this can do it all? 
 # Cases:
 # Case 1: No Game -> Game
-# Record the stats of the new game: Update or init. Send message if it's marked
-# This would count as a launch++
+# Record the stats of the new game: Update or init. Send message if it's marked.
+# TODO: Logic: This would count as a launch++ in update_game stats
+# Since, the user has transitioned to playing a game
 # Case 2: Game -> Other:
-# 1.Update game stats if the next item is a game repeating logic from the first case.
+# 1.Update game stats if the next item is a game; repeating logic from the first case.
 # 2. update that game's last time played (regardless). Then call update stats
 #    which will verify is it's a new launch. This will need an if not none check!
 # 3. If the next item is not a game then we simply ignore it. 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
     guild = discord.utils.get(bot.guilds, name=GUILD)
-    if is_user_registered(before):
+    if is_user_registered(member=before):
+        logger.debug("The user has updated their status")
         current_user = registered_users[before.id]
         # Case 1: The user has started playing a game.
         if (before.activity == None and (after.activity is not None 
             and after.activity.type == discord.ActivityType.playing)):
-                gameobj_after = after.activity
-                game_start_date = gameobj_after.start
-                if(current_user.previously_played(gameobj_after.name)):
-                    # Update the game stats. Provide no end date, since they have 
-                    # not gone from resuming playing a game. 
-                    current_user.update_game_stats(gameobj_after, game_start_date)
-                    record_to_json()
-                    if(current_user.is_game_marked(gameobj_after.name)):
-                        # The [0] idx is the first text channel found,
-                        # but this can be sent to general chat etc. 
-                        embed_msg = playing_marked_game(gameobj_after, before)
-                        await guild.text_channels[0].send(embed=embed_msg)
-                else:
-                    # The user is playing a new game
-                    current_user.init_game_stats(gameobj_after, 
-                                                 game_start_date, False)
-                    record_to_json()
-        else:  # Case 2: The user is now doing another activity
-            # The next activity could be a game!
-             if(before.activity is not None and 
-                before.activity.type == discord.ActivityType.playing and 
-                after.activity is None 
-                or after.activity.type == discord.ActivityType.playing):
-                users_prev_game = current_user.game_dict[before.activity.name]
-                users_prev_game.date_last_played = before.activity.end
-                if(after.activity is None):
-                    # they stopped playing. Record the time in the db.
-                elif after.activity.type = discord.ActivityType.playing:
-                    # they started playing. a diff game. Record the time they started playing
-                else:
-                    pass
-            elif (after.activity is not None and after.activity.type
-                    == discord.Activity.playing):
-                    # record stats of the game they are playing now
+                logger.debug("case 1")
+                deterministic_gameupdate(current_user, after.activity,
+                                         start_date=after.activity.start)
 
-                    # record time stopped playing, that is the moment they stopped playing
-                    # compare this to the start time of teh game, it would just 
-                    # be another date to compare to
+                if(current_user.is_game_marked(after.activity.name)):
+                    # The 0th index is the first text channel found,
+                    # but this can be sent to general chat etc. 
+                    embed_msg = playing_marked_game(after.activity, before)
+                    await guild.text_channels[0].send(embed=embed_msg)
+
+                record_to_json()
+        else:  # Case 2: The user stopped playing a game and is doing something else
+            # The next activity could be a game!
+             if((before.activity is not None and 
+                before.activity.type == discord.ActivityType.playing) and 
+                (after.activity is None 
+                or after.activity.type == discord.ActivityType.playing)):
+                logger.debug("case 2")
+                # Regardless of what the user is doing now, they were playing
+                # a game before, and so this should be updated. 
+                # NOTE: Due to limitations in discord py, the end time for 
+                # activities is inconsistient, so we merely take the utc now time
+                # which is equivalent.
+                deterministic_gameupdate(current_user, before.activity, 
+                                         end_date=datetime.utcnow())
+                record_to_json()
+                if(after.activity is not None and after.activity.type
+                    == discord.ActivityType.playing):
+                    # Determine if user is playing a new game or an old one.
+                    deterministic_gameupdate(current_user, after.activity,
+                                             start_date=after.activity.start)
+                    record_to_json()
+                else:
+                    # Since we know the user is not playing a game, the activity
+                    # they have transtioned to is of no interest to us. 
+                    pass
+
+def deterministic_gameupdate(user: MemberStatsPack, 
+                             discord_game_obj: discord.Game,
+                             start_date: datetime = None,
+                             end_date: datetime = None):
+    """ Helper function to update the game stats of discord game object that was 
+        passed in from on_member_update. Updates the game depending if the 
+        user has previously played it or not.
+    """
+    if user.previously_played(discord_game_obj.name):
+        if start_date is not None:
+            user.update_game_stats(discord_game_obj, 
+                                   start_date=start_date)
+        elif end_date is not None:
+            user.update_game_stats(discord_game_obj, 
+                                   end_date=end_date)
+        else:
+            pass
+    else:
+        logger.debug("brand new game was hit")
+        user.init_game_stats(discord_game_obj, discord_game_obj.start)
 
 
 def playing_marked_game(game_obj: discord.Game, 
@@ -228,9 +194,8 @@ def playing_marked_game(game_obj: discord.Game,
     
     return embed_msg
 
-# This function needs to be async, to be blocking. We don't 
-# want our lone thread writing to the JSON file, while some other task is
-# being awaited!
+# This function can be made async to improve performance, but a mutex lock should 
+# be used in conjuction to ensure we don't corrupt the file.
 def record_to_json():
     logger.debug("Attempting to record to JSON")
     with open(JSON_FILE, "w") as json_file:
@@ -260,12 +225,15 @@ async def get_list(ctx):
         game_str = ""
         newline_hit = 0
 
+        if len(user_data.game_dict) == 0:
+            game_str = "No games recorded just yet!"
+
         for game in user_data.game_dict:
             game_entry = user_data.game_dict[game]
-            if newline_hit == 5:
+            if newline_hit == 4:
                 game_str += '\n'
                 newline_hit = 0
-            game_str += (str(game_entry.name)) + " | "
+            game_str += "✳️ " + (str(game_entry.name)) + " "
             newline_hit += 1
 
         # Getting embed ready.
@@ -283,15 +251,19 @@ async def get_marked_list(ctx):
   if ctx.author.id in registered_users:
         user_data = registered_users[ctx.author.id]
         game_str = ""
+
+        if len(user_data.game_dict) == 0:
+            game_str = "No games recorded just yet!"
+
         newline_hit = 0
 
         for game in user_data.game_dict:
             game_entry = user_data.game_dict[game]
-            if newline_hit == 5:
+            if newline_hit == 4:
                 game_str += '\n'
                 newline_hit = 0
             if game_entry.marked_game:
-                game_str += (str(game_entry.name)) + " "
+                game_str += "✳️ " + (str(game_entry.name)) + " "
                 newline_hit += 1
 
         # Getting embed ready.
@@ -302,7 +274,6 @@ async def get_marked_list(ctx):
                                   color=hex_color_code)
         embed_msg.set_thumbnail(url = ctx.author.avatar_url)
         embed_msg.add_field(name="Listing", value=game_str)
-
         await ctx.send(embed=embed_msg)
 
 @bot.command(name='mark', help="""
@@ -324,8 +295,9 @@ async def mark(ctx, arg:str):
                 record_to_json()
             else:
                 descript_msg = ("The game you attempted to mark is not in "
-                               " your games list If you just started playing, "
-                               " the bot will record the Game in a minute!")
+                               "your games list If you just started playing, "
+                               "the bot will record the Game when you have "
+                               "have stopped playing the game in question")
                 embed_msg = discord.Embed(title="Error!", 
                                   description=descript_msg,
                                   color=hex_color_code)
@@ -345,8 +317,9 @@ async def unmark(ctx, arg):
                 record_to_json()
             else:
                 embed_descript = ("The game you attempted to mark is not in "
-                                 "your games list! If you just started playing,"
-                                 " the bot will record the Game a minute!")
+                                 "your games list! If you just started playing, "
+                                 "the bot will record game once you have stopped "
+                                 "playing the game in question.")
                 embed_msg = discord.Embed(title="Error!", 
                                         description=embed_descript,
                                         color=hex_color_code)
@@ -404,7 +377,6 @@ async def deregister_user(ctx):
     if user_id in registered_users:
         del registered_users[user_id]
         del error_dictionary[user_id]
-        record_to_json() # Ensure user is not re-added after.
 
         #Create embed
         embed_msg = discord.Embed(title="Unregistered!", description="",
@@ -413,41 +385,45 @@ async def deregister_user(ctx):
         embed_msg.add_field(name="Goodbye " + ctx.author.name, 
                            value='You have been unregistered in ' 
                            + str(ctx.guild), inline=True)
+
+        record_to_json() # Ensure user is not re-added after.
         await ctx.send(embed=embed_msg)
 
 @bot.command(name='stats', help="""Display the stats of a registered user.
             Apply @user for a particular user. Only one user can be mentioned
             at a time.""")
 async def display_stats(ctx):
-    logger.debug("Entered the stats function")
     mentions = ctx.message.mentions
     embed_msg = discord.Embed(title=ctx.author.name +  "'s " "Stats", 
                              description="",
                              color=hex_color_code)
 
-    if len(mentions) == 0:
-        if ctx.author.id in registered_users:
-            embed_msg = report_stats(ctx.author, embed_msg)
-            embed_msg.set_thumbnail(url = ctx.author.avatar_url)
-            await ctx.send(embed=embed_msg)
-    elif len(mentions) == 1:
-        # The first person mentioned
-         logger.debug("entered mentioned but invalid")
-         logger.debug(str(ctx.message.mentions[0].id))
-         if not is_user_registered(member=ctx.message.mentions[0]):
-            descript_msg = "Requested User is not registered"
-            not_registered = discord.Embed(title="User not Registered",
-                                           description=descript_msg,
-                                           color=hex_color_code)
-            not_registered.set_thumbnail(url=bot.user.avatar_url)
-            await ctx.send(embed=not_registered)
-         else:
+    if len(mentions) == 1:
+        # The first person mentioned will be taken into account only.
+        if is_user_registered(member=ctx.message.mentions[0]):
             embed_msg.title=ctx.message.mentions[0].name +  "'s " "Stats"
             embed_msg.set_thumbnail(url=ctx.message.mentions[0].avatar_url)
             embed_msg = report_stats(ctx.message.mentions[0], embed_msg)
-            await ctx.send(embed=embed_msg)
+        else:
+            descript_msg = "Requested User is not registered"
+            embed_msg = discord.Embed(title="User not Registered",
+                                    description=descript_msg,
+                                    color=hex_color_code)
+            embed_msg.set_thumbnail(url=bot.user.avatar_url)
+
     else:
-        pass
+        if is_user_registered(ctx.author):
+            embed_msg = report_stats(ctx.author, embed_msg)
+            embed_msg.set_thumbnail(url = ctx.author.avatar_url)
+        else:
+            descript_msg = "Requested User is not registered"
+            embed_msg = discord.Embed(title="User not Registered",
+                                    description=descript_msg,
+                                    color=hex_color_code)
+            embed_msg.set_thumbnail(url=bot.user.avatar_url)
+
+    
+    await ctx.send(embed=embed_msg)
 
 def report_stats(selected_member: discord.Member, 
                 embed: discord.embeds.Embed) -> discord.embeds.Embed:
@@ -459,7 +435,7 @@ def report_stats(selected_member: discord.Member,
     user_stats = registered_users[selected_member.id]
     most_launched = user_stats.most_launched_game
     least_launched = user_stats.least_launched_game
-    last_launched =  user_stats.last_game_launched
+    last_launched =  user_stats.last_launched_game
 
     if (most_launched is None and least_launched is None
             and last_launched is None):
@@ -519,15 +495,24 @@ async def user_registration_status(ctx):
                              description=descript,
                              color=hex_color_code)
 
-    if not is_user_registered(ctx=ctx):
-        descript = "The requested user is not registered."
-        embed_msg.description = descript
-        embed_msg.footer = "Called by " + ctx.author
-        await ctx.send(embed=embed_msg)
-    else:
+    mentions = ctx.message.mentions
+    member = ctx.author
+
+    if len(mentions) == 1:
+        member = ctx.message.mentions[0]
+        logger.debug("User mentioned someone")
+
+    if is_user_registered(member=member):
         descript = "The requested user is registered."
         embed_msg.description = descript
-        await ctx.send(embed=embed_msg)
+    else:
+        descript = "The requested user is not registered."
+        embed_msg.description = descript
+        embed_msg.set_footer(text="Called by " + ctx.author.name, 
+                             icon_url=ctx.author.avatar_url)
+
+    await ctx.send(embed=embed_msg)
+
 
 @bot.event
 async def on_command_error(ctx, error):

@@ -39,11 +39,14 @@ class GameStats():
         self.times_launched = times_launched
         self.days_launched = days_launched
 
+    # This function gives control to increment the times launched
+    # however, depending if the application uses a task loop 
+    # or the on_member_update event it might not be needed.
     def increment_times_launched(self):
         self.times_launched += 1
 
     def mark_game(self, marked: bool):
-        """ Allow the user to mark a game they want to play """ 
+        """ Allow the user to mark a game they want to play. """ 
         if marked:
             self.marked_game = True
         else:
@@ -53,6 +56,8 @@ class GameStats():
     def decode_date(date_string: str) -> datetime:
         """ Decode a datetime object given a string representation 
             e.g. creating a date object from a json file. 
+
+            Returns None if the date string is None.
         """
         if date_string == None:
             return None
@@ -110,7 +115,7 @@ class MemberStatsPack():
         Attributes: 
             most_launched_game: The game that's been most launched.
             least_launched_game: The game that's been least launched.
-            last_game_launched: The game that was launched last.
+            last_launched_game: The game that was launched last.
             game_dict: A dictionary of the games the user has launched.
     """
 
@@ -140,7 +145,7 @@ class MemberStatsPack():
         self.__MemberStatsPack__ = True # metadata
         self.most_launched_game  = most_launched
         self.least_launched_game = least_launched
-        self.last_game_launched  = last_game
+        self.last_launched_game  = last_game
         
         if restored_game_list is not None: 
             self.game_dict = restored_game_list
@@ -148,24 +153,29 @@ class MemberStatsPack():
             self.game_dict = {} # Key: Name of the game; Value: GameStats object
     
 
-    def init_game_stats(self, current_game: discord.Game, date: datetime, 
-                        marked: bool = False):
+    def init_game_stats(self, current_game: discord.Game, date: datetime):
         """ This function should be called when creating a new gamestats object
             that is to be entered into the user's tracked games.
 
             Parameters:
                 current_game: The discord game object
                 date: A datetime object for init'ing the game object
-                marked: set a game as marked if desired
         """
         game_object = GameStats(given_name=current_game.name, 
                                 date_first_added=date, 
                                 date_last_played=date,
-                                marked_game=marked, 
+                                marked_game=False, 
                                 times_launched=1, 
                                 days_launched=1)
 
+        # We add the game to the games list,
+        # and it becomes the last game launched
         self.game_dict[current_game.name] = game_object
+        self.last_launched_game = game_object
+
+        if self.least_launched_game is None and self.most_launched_game is None:
+            self.least_launched_game = game_object
+            self.most_launched_game = game_object
     
     def previously_played(self, game_key: str) -> bool:
         """ Returns true, if a user has 
@@ -196,38 +206,41 @@ class MemberStatsPack():
         """
         return self.game_dict[name_of_game].marked_game
 
+    #TODO: Update the logic of this function.
     def update_game_stats(self, game_activity: discord.Game, 
                           start_date: datetime=None, end_date: datetime=None):
         """ Update the statistics for a game, given a game object that was already
-            registered with the particular memeber. 
+            registered with the particular memeber. If the intent is to update
+            game stats for a game the user has not played, then the application
+            should call init_game_stats.
 
             Parameters:
             game_activity: A game object that is already within the member's 
                            game dictionary.
 
             start_date: The date the user started playing the game. 
-                        Retrieved viaDiscord Py's API. 
+                        Retrieved via Discord Py's API. 
             end_date:   The date the user stoped playing a game. 
-                        Retrieved viaDiscord Py's API. 
+                        Retrieved via Discord Py's API. 
         """
         # Current game being queried, becomes the last game launched.
-        self.last_game_launched = self.game_dict[game_activity.name]
+        self.last_launched_game = self.game_dict[game_activity.name]
 
+        # Retrieve what we were previously working with.
         prev_game_stats = self.game_dict[game_activity.name]
 
-        # TODO: Fix! f the start time does not match then the user
-        # quit the game or has decided to launch it again later.
-        current_start_greater = start_date > prev_game_stats.date_last_played
-        prev_day= prev_game_stats.date_last_played.day
-
-        if current_start_greater:
+        if start_date is not None:
+            prev_start_day = prev_game_stats.date_last_played.day
+            if start_date.day > prev_start_day:
+                prev_game_stats.days_launched += 1
             prev_game_stats.date_last_played = start_date
             prev_game_stats.increment_times_launched()
-
-            # if the day changes record that data too.
-            # This should be nested underneath.
-            if start_date.day > prev_day:
-                prev_game_stats.days_launched += 1
+        elif end_date is not None:
+            # Merely update the time last played.
+            # No need to update times launched
+            prev_game_stats.date_last_played = end_date
+        else:
+            pass
 
         # Update games being processed.
         self.update_most_launched() 
@@ -312,7 +325,7 @@ class MemberStatsPack():
 
             most_launched  = decode_game(dict["most_launched_game"])
             least_launched = decode_game(dict["least_launched_game"])
-            last_launched  = decode_game(dict["last_game_launched"])
+            last_launched  = decode_game(dict["last_launched_game"])
 
             json_game_dict = dict["game_dict"]
             restored_game_list = {}
@@ -327,21 +340,3 @@ class MemberStatsPack():
                                    restored_game_list=restored_game_list)
         else:
             return None
-
-
-
-if __name__ == "__main__":
-    thing1 = {}
-    objGame = GameStats("billy", datetime.now(), marked_game = False)
-    obj1 = MemberStatsPack(most_launched=objGame)
-    obj1.game_dict["a"] = objGame
-    thing1["b"] = obj1
-    thing1["a"] = obj1
-    thing2 = {}
-    with open("GuildData.json", "w") as data_file:
-        json.dump(thing1, data_file, indent=2, default=MemberStatsPack.json_encoder)
-
-    with open("GuildData.json", "r") as f:
-        thing2 = json.load(f)
-
-    print(thing2)
