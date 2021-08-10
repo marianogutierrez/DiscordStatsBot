@@ -34,7 +34,7 @@ ERR_FILE  = os.getenv('LOG_FILE')
 # Setting up logging...
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-# For the file handler below, we can use append ('a')to keep over many sessions. 
+# For the file handler below, we can use append('a') to keep over many sessions. 
 file_handler = logging.FileHandler(filename=ERR_FILE, encoding='utf-8', mode='w')
 formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 file_handler.setFormatter(formatter)
@@ -84,7 +84,6 @@ async def on_ready():
         if file.endswith(".py"):
             bot.load_extension(f"Cogs.{file[:-3]}")
 
-    #record_stats.start() 
 # Main tasks below:
 
 def is_user_registered(member=None) -> bool:
@@ -99,37 +98,22 @@ def is_user_registered(member=None) -> bool:
         else: 
             return False
 
-# this begs the question...
-# TODO: do I even need the function above if this can do it all? 
-# Cases:
-# Case 1: No Game -> Game
-# Record the stats of the new game: Update or init. Send message if it's marked.
-# TODO: Logic: This would count as a launch++ in update_game stats
-# Since, the user has transitioned to playing a game
-# Case 2: Game -> Other:
-# 1.Update game stats if the next item is a game; repeating logic from the first case.
-# 2. update that game's last time played (regardless). Then call update stats
-#    which will verify is it's a new launch. This will need an if not none check!
-# 3. If the next item is not a game then we simply ignore it. 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
     guild = discord.utils.get(bot.guilds, name=GUILD)
     if is_user_registered(member=before):
         logger.debug("The user has updated their status")
         current_user = registered_users[before.id]
-        # Case 1: The user has started playing a game.
         if (before.activity == None and (after.activity is not None 
             and after.activity.type == discord.ActivityType.playing)):
-                logger.debug("case 1")
+                # Case 1: The user has started playing a game.
                 deterministic_gameupdate(current_user, after.activity,
                                          start_date=after.activity.start)
-
                 if(current_user.is_game_marked(after.activity.name)):
                     # The 0th index is the first text channel found,
                     # but this can be sent to general chat etc. 
                     embed_msg = playing_marked_game(after.activity, before)
                     await guild.text_channels[0].send(embed=embed_msg)
-
                 record_to_json()
         else:  # Case 2: The user stopped playing a game and is doing something else
             # The next activity could be a game!
@@ -137,7 +121,6 @@ async def on_member_update(before: discord.Member, after: discord.Member):
                 before.activity.type == discord.ActivityType.playing) and 
                 (after.activity is None 
                 or after.activity.type == discord.ActivityType.playing)):
-                logger.debug("case 2")
                 # Regardless of what the user is doing now, they were playing
                 # a game before, and so this should be updated. 
                 # NOTE: Due to limitations in discord py, the end time for 
@@ -376,16 +359,18 @@ async def deregister_user(ctx):
     user_id = ctx.author.id
     if user_id in registered_users:
         del registered_users[user_id]
-        del error_dictionary[user_id]
 
+        # Remove user from the error dictionary as well if applicable.
+        if user_id in error_dictionary:
+            del error_dictionary[user_id]
+        
         #Create embed
-        embed_msg = discord.Embed(title="Unregistered!", description="",
+        embed_msg = discord.Embed(title="Deregistered!", description="",
                                 color=hex_color_code)
         embed_msg.set_thumbnail(url = bot.user.avatar_url)
         embed_msg.add_field(name="Goodbye " + ctx.author.name, 
-                           value='You have been unregistered in ' 
+                           value='You have been deregistered in ' 
                            + str(ctx.guild), inline=True)
-
         record_to_json() # Ensure user is not re-added after.
         await ctx.send(embed=embed_msg)
 
@@ -424,6 +409,7 @@ async def display_stats(ctx):
 
     
     await ctx.send(embed=embed_msg)
+
 
 def report_stats(selected_member: discord.Member, 
                 embed: discord.embeds.Embed) -> discord.embeds.Embed:

@@ -1,7 +1,6 @@
 # Standard Library imports
 from __future__ import annotations
 from datetime import datetime
-import json
 import re
 
 # 3rd party imports
@@ -213,6 +212,13 @@ class MemberStatsPack():
             registered with the particular memeber. If the intent is to update
             game stats for a game the user has not played, then the application
             should call init_game_stats.
+
+            The start_date and end_date determine behavior.
+            If a start_date is provided, then the times launched increases.
+            The days launched may also increase if it applies too.
+            
+            If an end_date is provided, then we merely update the date in
+            which the user had stopped playing a game.
 
             Parameters:
             game_activity: A game object that is already within the member's 
