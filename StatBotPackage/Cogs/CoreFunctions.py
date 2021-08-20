@@ -18,10 +18,10 @@ from StatBotPackage.UserErrorTimer import UserTimer
 
 # Loading environment...
 load_dotenv()
-TOKEN     = os.getenv('DISCORD_TOKEN')
-GUILD     = os.getenv('DISCORD_GUILD')
-JSON_FILE = os.getenv('JSON_FILE')
-ERR_FILE  = os.getenv('LOG_FILE')
+TOKEN     = os.getenv("DISCORD_TOKEN")
+GUILD     = os.getenv("DISCORD_GUILD")
+JSON_FILE = os.getenv("JSON_FILE")
+ERR_FILE  = os.getenv("LOG_FILE")
 
 # Setting up logging...
 logger = logging.getLogger(__name__)
@@ -46,13 +46,9 @@ class CoreFunctions(commands.Cog):
         try:
             if (os.stat(JSON_FILE).st_size == 0) is not True:
                 self.restore_from_json()
-        
         except OSError: 
             logger.error("Failed to find the JSON file that was requested.")
 
-
-    # This function can be made async to improve performance, but a mutex lock should 
-    # be used in conjuction to ensure we don't corrupt the file.
     def record_to_json(self):
         logger.debug("Attempting to record to JSON")
         with open(JSON_FILE, "w") as json_file:
@@ -74,8 +70,6 @@ class CoreFunctions(commands.Cog):
             self.registered_users[int(entry)] = None 
             current_entry = registered_users_temp[entry]
             self.registered_users[int(entry)] = MemberStatsPack.json_decoder(current_entry)
-
-
 
     def is_user_registered(self, member=None) -> bool:
         """ Helper function:
@@ -131,11 +125,12 @@ class CoreFunctions(commands.Cog):
                         # they have transtioned to is of no interest to us. 
                         pass
     
-    @staticmethod
-    def deterministic_gameupdate(user: MemberStatsPack, 
-                                discord_game_obj: discord.Game,
-                                start_date: datetime = None,
-                                end_date: datetime = None):
+
+    def deterministic_gameupdate(self,
+                                 user: MemberStatsPack, 
+                                 discord_game_obj: discord.Game,
+                                 start_date: datetime = None,
+                                 end_date: datetime = None):
         """ Helper function to update the game stats of discord game object that was 
             passed in from on_member_update. Updates the game depending if the 
             user has previously played it or not.
@@ -170,8 +165,9 @@ class CoreFunctions(commands.Cog):
         return embed_msg
 
 
-    @commands.command(name="getlist", 
-                help="Retrieve the games you have previously launched.")
+    @commands.command(name="getlist",
+                      description= "Returns a list of games that have been launched.",
+                      help="use !getlist to display a list of previously played games.")
     async def get_list(self,ctx):
         if ctx.author.id in self.registered_users:
             user_data = self.registered_users[ctx.author.id]
@@ -198,8 +194,9 @@ class CoreFunctions(commands.Cog):
             embed_msg.add_field(name="Listing", value=game_str)
             await ctx.send(embed=embed_msg)
             
-    @commands.command(name="markedgames", help="Retrieve "
-                "the list of games you have marked.")
+    @commands.command(name="markedgames", 
+                      description= "Returns a list of games you have marked for yourself.",
+                      help="Call with @ or !markedgames to retrieve your list.")
     async def get_marked_list(self,ctx):
         if ctx.author.id in self.registered_users:
             user_data = self.registered_users[ctx.author.id]
@@ -229,11 +226,15 @@ class CoreFunctions(commands.Cog):
             embed_msg.add_field(name="Listing", value=game_str)
             await ctx.send(embed=embed_msg)
 
-    @commands.command(name='mark', help="""
-    Mark a game so that you don't launch it too often.
-    This argument passed should be the name of the game in quotes if it has spaces.
-    As displayed on discord. You can view of a list of games by calling
-    The getlist command too. """)
+    @commands.command(name="mark",
+                      description = """Allows you to \"mark\" a game. So, that 
+                                    the bot will send a message to the server "
+                                    saying you are playing "
+                                    a game you didn't want to launch again.""", 
+                      help=""" Mark a game so that you don't launch it too often.\n
+                               usage: !mark <\"name of game\">\n
+                               Enter the name exaclty as it appears in your
+                               game list, but with quotes.  """)
     async def mark(self, ctx, arg:str):
         logger.info("The game name passed in: " + arg)
         if ctx.author.id in self.registered_users:
@@ -258,7 +259,10 @@ class CoreFunctions(commands.Cog):
                     await ctx.send(embed=embed_msg)
 
 
-    @commands.command(name='unmark', help="""
+    @commands.command(name="unmark", 
+                      description= """Allows you to \"unmark\" a gmame you have
+                                    previously marked """,
+    help="""
     unmark a previously marked game. If a game was already 
     unmarked will do nothing. """)
     async def unmark(self,ctx, arg):

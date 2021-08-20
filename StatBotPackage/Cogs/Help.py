@@ -21,7 +21,7 @@ class Help(commands.Cog):
         print("Help Cog now Active.")
 
     @commands.command(name='help', aliases=["h"], 
-                      description="Help Command Details", help="Call this command "
+                      description="The Help Command", help="Call this command "
                       "to receive help on how to use the bot.")
     async def help_command(self, ctx):
 
@@ -42,9 +42,7 @@ class Help(commands.Cog):
         page_list.append(primary_embed)
 
 
-        # Process each cog
-        # need to add each one to the page_list which will be interacted with to ensure that 
-        # usage of buttons works to changes pages.
+        # Process each cog:
         for cog in cog_list:
             command_text = ""
             for command in self.bot.get_cog(cog).walk_commands():
@@ -60,8 +58,8 @@ class Help(commands.Cog):
         # Logic to create the pagination inteface below: 
 
         # Call upon a 'future' object
-        # This will send off the message given the context, but also return the message itself.
-        # This allows for future modification.
+        # This will send off the message given the context, but also return
+        # the message itself. This allows for future modification.
         message = await ctx.send(embed=primary_embed)
         # Setup the buttons we will be using for our message.
         await message.add_reaction('⏮')
@@ -73,13 +71,12 @@ class Help(commands.Cog):
         total_pages = len(page_list)
         page_idx = 0
 
-        # Declaration of local function with the same arguements as the reaction_add event.
-        # This is necessary in order to use the wait_for call.
+        # Declaration of local function with the same arguements as 
+        # the reaction_add event. This is necessary in order to use the wait_for call.
         def check(curr_reaction, user):
             return user == ctx.author
 
         while True:
-            # Send the user to the very first page.
             if str(curr_reaction) == '⏮':
                 page_idx = 0
                 await message.edit(embed=page_list[page_idx])

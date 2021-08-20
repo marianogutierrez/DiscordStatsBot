@@ -19,7 +19,7 @@ class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="coinflip", description= "A command to flip a coin",
+    @commands.command(name="coinflip", description="A command to flip a coin",
                       help="Call to flip a coin! Returns heads or tails")
     async def filp_coin(self, ctx) -> None:
         """ Function that returns 'Heads' or 'Tails' 

@@ -205,7 +205,6 @@ class MemberStatsPack():
         """
         return self.game_dict[name_of_game].marked_game
 
-    #TODO: Update the logic of this function.
     def update_game_stats(self, game_activity: discord.Game, 
                           start_date: datetime=None, end_date: datetime=None):
         """ Update the statistics for a game, given a game object that was already
