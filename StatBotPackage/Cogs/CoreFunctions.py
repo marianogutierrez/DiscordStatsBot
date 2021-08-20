@@ -288,16 +288,6 @@ class CoreFunctions(commands.Cog):
         
         Example usage: !register OR @<botname> register 
         """
-
-        #TODO: Delete below later for debug. 
-        # A user should not be able to register another. 
-        mentions = ctx.message.mentions
-        if len(mentions) == 1:
-            id_to_register = ctx.message.mentions[0].id
-            self.registered_users[id_to_register] = MemberStatsPack()
-            self.record_to_json()
-            return
-        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         user_name_str = ctx.author.name
 
         if ctx.author.id in self.registered_users:
