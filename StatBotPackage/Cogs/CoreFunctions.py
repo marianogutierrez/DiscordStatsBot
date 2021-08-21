@@ -55,7 +55,6 @@ class CoreFunctions(commands.Cog):
             json.dump(self.registered_users, json_file, indent=2,
                       default=MemberStatsPack.json_encoder)
 
-
     def restore_from_json(self):
         """ Function used to restore the internal data structures used
             by the stats bot.
@@ -124,7 +123,6 @@ class CoreFunctions(commands.Cog):
                         # Since we know the user is not playing a game, the activity
                         # they have transtioned to is of no interest to us. 
                         pass
-    
 
     def deterministic_gameupdate(self,
                                  user: MemberStatsPack, 
@@ -165,7 +163,6 @@ class CoreFunctions(commands.Cog):
         
         return embed_msg
 
-
     @commands.command(name="getlist",
                       description= "Returns a list of games "
                                    "that have been launched.",
@@ -196,7 +193,7 @@ class CoreFunctions(commands.Cog):
             embed_msg.set_thumbnail(url = ctx.author.avatar_url)
             embed_msg.add_field(name="Listing", value=game_str)
             await ctx.send(embed=embed_msg)
-            
+
     @commands.command(name="markedgames", 
                       description= "Returns a list of games you "
                                    "have marked for yourself.",
@@ -261,7 +258,6 @@ class CoreFunctions(commands.Cog):
                                     color=self.hex_color_code)
                     embed_msg.set_thumbnail(url = self.bot.user.avatar_url)
                     await ctx.send(embed=embed_msg)
-
 
     @commands.command(name="unmark", 
                       description= "Allows you to \"unmark\" a gmame you have "
@@ -342,7 +338,6 @@ class CoreFunctions(commands.Cog):
                             + str(ctx.guild), inline=True)
             self.record_to_json() # Ensure user is not re-added after.
             await ctx.send(embed=embed_msg)
-
 
     def embed_helper(self, *, field_name: str, game_obj: GameStats,embed: 
                     discord.embeds.Embed) -> discord.embeds.Embed:
@@ -434,9 +429,8 @@ class CoreFunctions(commands.Cog):
                                         color=self.hex_color_code)
                 embed_msg.set_thumbnail(url=self.bot.user.avatar_url)
 
-        
-        await ctx.send(embed=embed_msg)
 
+        await ctx.send(embed=embed_msg)
 
     @commands.command(name="isRegi",
                       description="Determine if you, or another user, "
