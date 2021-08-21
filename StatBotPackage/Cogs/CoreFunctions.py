@@ -52,8 +52,8 @@ class CoreFunctions(commands.Cog):
     def record_to_json(self):
         logger.debug("Attempting to record to JSON")
         with open(JSON_FILE, "w") as json_file:
-            json.dump(self.registered_users, json_file, indent=2, 
-                    default=MemberStatsPack.json_encoder)
+            json.dump(self.registered_users, json_file, indent=2,
+                      default=MemberStatsPack.json_encoder)
 
 
     def restore_from_json(self):
@@ -100,8 +100,8 @@ class CoreFunctions(commands.Cog):
                         embed_msg = self.playing_marked_game(after.activity, before)
                         await guild.text_channels[0].send(embed=embed_msg)
                     self.record_to_json()
-            else:  # Case 2: The user stopped playing a game and is doing something else
-                # The next activity could be a game!
+            else: # Case 2: The user stopped playing a game and is doing something else.
+                  # The next activity could be a game!
                 if((before.activity is not None and 
                     before.activity.type == discord.ActivityType.playing) and 
                     (after.activity is None 
@@ -131,9 +131,10 @@ class CoreFunctions(commands.Cog):
                                  discord_game_obj: discord.Game,
                                  start_date: datetime = None,
                                  end_date: datetime = None):
-        """ Helper function to update the game stats of discord game object that was 
-            passed in from on_member_update. Updates the game depending if the 
-            user has previously played it or not.
+        """ Helper function to update the game stats of discord game 
+            object that was passed in from on_member_update.
+            Updates the game depending if the user has previously
+            played it or not.
         """
         if user.previously_played(discord_game_obj.name):
             if start_date is not None:
@@ -151,8 +152,8 @@ class CoreFunctions(commands.Cog):
 
     def playing_marked_game(self,game_obj: discord.Game, 
                             member_ref: discord.Member) -> discord.Embed:
-        """ Helper function to send an embed notifying the user is playing a game that have
-            marked previously! 
+        """ Helper function to send an embed notifying the user is playing
+            a game that had been marked previously! 
         """
         game_descript = ("You have launched the marked game: " 
                         + game_obj.name + "!")
@@ -166,8 +167,10 @@ class CoreFunctions(commands.Cog):
 
 
     @commands.command(name="getlist",
-                      description= "Returns a list of games that have been launched.",
-                      help="use !getlist to display a list of previously played games.")
+                      description= "Returns a list of games "
+                                   "that have been launched.",
+                      help="use !getlist to display a list of "
+                           "previously played games.")
     async def get_list(self,ctx):
         if ctx.author.id in self.registered_users:
             user_data = self.registered_users[ctx.author.id]
@@ -195,7 +198,8 @@ class CoreFunctions(commands.Cog):
             await ctx.send(embed=embed_msg)
             
     @commands.command(name="markedgames", 
-                      description= "Returns a list of games you have marked for yourself.",
+                      description= "Returns a list of games you "
+                                   "have marked for yourself.",
                       help="Call with @ or !markedgames to retrieve your list.")
     async def get_marked_list(self,ctx):
         if ctx.author.id in self.registered_users:
@@ -227,14 +231,14 @@ class CoreFunctions(commands.Cog):
             await ctx.send(embed=embed_msg)
 
     @commands.command(name="mark",
-                      description = """Allows you to \"mark\" a game. So, that 
-                                    the bot will send a message to the server "
-                                    saying you are playing "
-                                    a game you didn't want to launch again.""", 
-                      help=""" Mark a game so that you don't launch it too often.\n
-                               usage: !mark <\"name of game\">\n
-                               Enter the name exaclty as it appears in your
-                               game list, but with quotes.  """)
+                      description = "Allows you to \"mark\" a game. So, that "
+                                    "the bot will send a message to the server "
+                                    "saying you are playing "
+                                    "a game you didn't want to launch again.", 
+                      help="Mark a game so that you don't launch it too often.\n"
+                           "usage: !mark <\"name of game\">\n"
+                           "Enter the name exaclty as it appears in your "
+                           "game list, but with quotes.")
     async def mark(self, ctx, arg:str):
         logger.info("The game name passed in: " + arg)
         if ctx.author.id in self.registered_users:
@@ -260,11 +264,10 @@ class CoreFunctions(commands.Cog):
 
 
     @commands.command(name="unmark", 
-                      description= """Allows you to \"unmark\" a gmame you have
-                                    previously marked """,
-    help="""
-    unmark a previously marked game. If a game was already 
-    unmarked will do nothing. """)
+                      description= "Allows you to \"unmark\" a gmame you have "
+                                    "previously marked",
+                      help="unmark a previously marked game. If a game "
+                           "was already unmarked will do nothing.")
     async def unmark(self,ctx, arg):
         if ctx.author.id in self.registered_users:
             user = self.registered_users[ctx.author.id]
@@ -275,15 +278,18 @@ class CoreFunctions(commands.Cog):
                 else:
                     embed_descript = ("The game you attempted to mark is not in "
                                     "your games list! If you just started playing, "
-                                    "the bot will record game once you have stopped "
-                                    "playing the game in question.")
+                                    "the bot will record game once you have "
+                                    "stopped playing the game in question.")
                     embed_msg = discord.Embed(title="Error!", 
                                             description=embed_descript,
                                             color=self.hex_color_code)
                     embed_msg.set_thumbnail(url = self.bot.user.avatar_url)
                     await ctx.send(embed=embed_msg)
 
-    @commands.command(name='register', help='registers yourself with the stats bot.')
+    @commands.command(name="register",
+                      description="Regsiter your self with the launched bot.",
+                      help="Call to have the Launched bot to begin recording "
+                            "statistics")
     async def register_user(self, ctx):
         """Function that allows a user to register themsevles with the 
         games launched bot. To use the bot, the user must first register
@@ -318,8 +324,10 @@ class CoreFunctions(commands.Cog):
                             str(ctx.guild), inline=True)
             await ctx.author.send(embed=embed_msg)
 
-    @commands.command(name='deregister', 
-                      help='deregister yourself from the stats bot.')
+    @commands.command(name="deregister",
+                      description="Deregister yourself from the stats bot.", 
+                      help="Call this command to stop the bot from keeping "
+                           "track of your stats.")
     async def deregister_user(self,ctx):
         user_id = ctx.author.id
         if user_id in self.registered_users:
@@ -336,8 +344,7 @@ class CoreFunctions(commands.Cog):
             await ctx.send(embed=embed_msg)
 
 
-    @staticmethod
-    def embed_helper(*, field_name: str, game_obj: GameStats,embed: 
+    def embed_helper(self, *, field_name: str, game_obj: GameStats,embed: 
                     discord.embeds.Embed) -> discord.embeds.Embed:
         """Helper function to add fields to game stats.
             Parameters:
@@ -378,22 +385,25 @@ class CoreFunctions(commands.Cog):
             return embed
 
         if most_launched is not None:
-            CoreFunctions.embed_helper(field_name="Most Launched Game",
+            self.embed_helper(field_name="Most Launched Game",
                         game_obj=most_launched, embed=embed)
 
         if least_launched is not None:
-            CoreFunctions.embed_helper(field_name="Least Launched Game", 
+            self.embed_helper(field_name="Least Launched Game", 
                         game_obj=least_launched, embed=embed)
 
         if last_launched is not None:
-            CoreFunctions.embed_helper(field_name="Last Launched Game", 
+            self.embed_helper(field_name="Last Launched Game", 
                         game_obj=last_launched, embed=embed)
 
         return embed
 
-    @commands.command(name='stats', help="""Display the stats of a registered user.
-                Apply @user for a particular user. Only one user can be mentioned
-                at a time.""")
+    @commands.command(name="stats", 
+                      description="Display your (or another registered users) "
+                                  "most, least, and last played games.",
+                      help="Display the stats of a registered user. "
+                           "Apply @user for a particular user. Only one user "
+                           "can be mentioned at a time.")
     async def display_stats(self,ctx):
         mentions = ctx.message.mentions
         embed_msg = discord.Embed(title=ctx.author.name +  "'s " "Stats", 
@@ -428,8 +438,11 @@ class CoreFunctions(commands.Cog):
         await ctx.send(embed=embed_msg)
 
 
-    @commands.command(name='isRegi', 
-    help='Invoke to return a list of users registered with this bot on the server.' )
+    @commands.command(name="isRegi",
+                      description="Determine if you, or another user, "
+                                  "are registered with the stats bot. ",
+                      help="Invoke to determine if you or another user "
+                            "are registered." )
     async def user_registration_status(self,ctx):
         """ Users invoke this command in the server to see if a user 
             is registered with the games launched bot. 

@@ -41,7 +41,6 @@ class Help(commands.Cog):
         # The first page is the general help page.
         page_list.append(primary_embed)
 
-
         # Process each cog:
         for cog in cog_list:
             command_text = ""
@@ -92,7 +91,7 @@ class Help(commands.Cog):
                 page_idx = total_pages - 1
                 await message.edit(embed=page_list[page_idx])
             try:
-                curr_reaction, user = await self.bot.wait_for('reaction_add', timeout = 10.0, check = check)
+                curr_reaction, user = await self.bot.wait_for('reaction_add', timeout = 30.0, check = check)
                 await message.remove_reaction(curr_reaction, user)
             except asyncio.TimeoutError:
                 await message.edit(embed=timeout_embed)
