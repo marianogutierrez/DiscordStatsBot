@@ -526,6 +526,8 @@ class CoreFunctions(commands.Cog):
                     await ctx.send(embed=embed_msg)
                 else:
                     pass
+        else: # Catch any errors in any of the other cogs.
+            logger.debug(f"Error: {error} Raised By: {ctx.command}")
 
 def setup(bot: commands.Bot):
     """ Setup for extension loading:
