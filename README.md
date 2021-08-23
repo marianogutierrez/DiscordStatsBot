@@ -1,4 +1,4 @@
-# DiscordStatsBot
+## Launched
 ## A Discord bot that collects data from the users on the server.
 
 ![Launched Banner](https://github.com/marianogutierrez/DiscordStatsBot/blob/main/LaunchedBanner.png)
@@ -32,3 +32,5 @@ ERR_FILE  = os.getenv("LOG_FILE")
 
 Overall, the user must have a token - thus they have to make their own bot first - a guild to run the bot, and some hardcoded paths on where there JSON and error files will be located.
 Finally, the user should enter the StatsBotPackage, and run `python<3.7 or greater> StatsBot.py`.
+
+# Screenshots:
