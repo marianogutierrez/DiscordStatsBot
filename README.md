@@ -14,3 +14,21 @@ The Launched discord bot also has one important feature. This is the abilty to "
 
 # Technical Details:
 This bot records data in a json file. The data structures created for it are designed to be dumped into a file and then restored by parsing the dictionaries in the JSON file. This restores the data structures upon the waking of the bot, so that all data is saved when it is resumed.
+
+# How do I run this bot? 
+This bot makes uses of the load dotenv modules see: https://github.com/theskumar/python-dotenv
+Loading some data as enviroment variables is necessary, as a bot's TOKEN is unique to the user who created it. Thus, exposing such data in source code would be very unwise, and other users may engage in malicious actions with the bot.
+
+Use of the load env module can be seen in the CoreFunctions cog, as well as the main driver, StatsBot.py.
+
+```
+# Loading environment...
+load_dotenv()
+TOKEN     = os.getenv("DISCORD_TOKEN")
+GUILD     = os.getenv("DISCORD_GUILD")
+JSON_FILE = os.getenv("JSON_FILE")
+ERR_FILE  = os.getenv("LOG_FILE")
+```
+
+Overall, the user must have a token - thus they have to make their own bot first - a guild to run the bot, and some hardcoded paths on where there JSON and error files will be located.
+Finally, the user should enter the StatsBotPackage, and run `python<3.7 or greater> StatsBot.py`.
