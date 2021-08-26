@@ -38,12 +38,6 @@ class GameStats():
         self.times_launched = times_launched
         self.days_launched = days_launched
 
-    # This function gives control to increment the times launched
-    # however, depending if the application uses a task loop
-    # or the on_member_update event it might not be needed.
-    def increment_times_launched(self):
-        self.times_launched += 1
-
     def mark_game(self, marked: bool):
         """ Allow the user to mark a game they want to play. """
         if marked:
@@ -155,6 +149,7 @@ class MemberStatsPack():
     def init_game_stats(self, current_game: discord.Game, date: datetime):
         """ This function should be called when creating a new gamestats object
             that is to be entered into the user's tracked games.
+            NOTE: The dates for first and last date are the same on initialization.
 
             Parameters:
                 current_game: The discord game object
@@ -172,6 +167,10 @@ class MemberStatsPack():
         self.game_dict[current_game.name] = game_object
         self.last_launched_game = game_object
 
+        # One time initialization for defaults
+        # No need to set this as the least launched if least launched is not None.
+        # The on_memeber_update function will address this when it calls
+        # update_least_launched with the update_game_stats function.
         if self.least_launched_game is None and self.most_launched_game is None:
             self.least_launched_game = game_object
             self.most_launched_game = game_object
@@ -239,7 +238,7 @@ class MemberStatsPack():
             if start_date.day > prev_start_day:
                 prev_game_stats.days_launched += 1
             prev_game_stats.date_last_played = start_date
-            prev_game_stats.increment_times_launched()
+            prev_game_stats.times_launched += 1
         elif end_date is not None:
             # Merely update the time last played.
             # No need to update times launched

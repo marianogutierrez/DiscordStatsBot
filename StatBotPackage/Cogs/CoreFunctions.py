@@ -117,7 +117,12 @@ class CoreFunctions(commands.Cog):
                         == discord.ActivityType.playing):
                         # Determine if user is playing a new game or an old one.
                         self.deterministic_gameupdate(current_user, after.activity,
-                                                start_date=after.activity.start)
+                                                      start_date=after.activity.start)
+
+                        if(current_user.is_game_marked(after.activity.name)):
+                            embed_msg = self.playing_marked_game(after.activity, before)
+                            await guild.text_channels[0].send(embed=embed_msg)
+
                         self.record_to_json()
                     else:
                         # Since we know the user is not playing a game, the activity
@@ -343,8 +348,8 @@ class CoreFunctions(commands.Cog):
                     discord.embeds.Embed) -> discord.embeds.Embed:
         """Helper function to add fields to game stats.
             Parameters:
-                field_name: A string that will be used as the name of a new field
-                            for an embed.
+                field_name: A string that will be used as the name of a new 
+                            field for an embed.
                 game_obj:   An instance of a game object that will be used to 
                             retrieve game data.
                 embed:      An instance of a discord embed that will be 
@@ -364,7 +369,9 @@ class CoreFunctions(commands.Cog):
 
     def report_stats(self, selected_member: discord.Member, 
                     embed: discord.embeds.Embed) -> discord.embeds.Embed:
-        """ Helper function for the display_stats displays the main stats for games.
+        """ Helper function for the display_stats displays the 
+            main stats for games.
+
             Parameters:
                 selected_member: The member to process stats for.
                 embed: An embed that will be modified. 
@@ -442,8 +449,9 @@ class CoreFunctions(commands.Cog):
             is registered with the games launched bot. 
 
             Usage: !isRegi - will tell the calling user if they are registered
-                !isRegi @<user in server> - tell user if requested user is registered
-                The above usage can also be invoked by merely mentioning the bot.
+                !isRegi @<user in server> - tell user if requested 
+                user is registered. The above usage can also be invoked 
+                by merely mentioning the bot.
         """
         descript = ""
         embed_msg = discord.Embed(title="Registration Status", 
