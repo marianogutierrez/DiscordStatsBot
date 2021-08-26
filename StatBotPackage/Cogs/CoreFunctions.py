@@ -92,7 +92,7 @@ class CoreFunctions(commands.Cog):
                 and after.activity.type == discord.ActivityType.playing)):
                     # Case 1: The user has started playing a game.
                     self.deterministic_gameupdate(current_user, after.activity,
-                                            start_date=after.activity.start)
+                                                  start_date=after.activity.start)
                     if(current_user.is_game_marked(after.activity.name)):
                         # The 0th index is the first text channel found,
                         # but this can be sent to general chat etc. 
@@ -353,7 +353,7 @@ class CoreFunctions(commands.Cog):
         embed.add_field(name=field_name,
                         value=game_obj.name
                         + "\nDate First Played: "
-                        + str(game_obj.date_first_added)
+                        + str(game_obj.date_first_played)
                         + "\nDate Last Played: "
                         + str(game_obj.date_last_played)
                         + "\nTimes Launched: "

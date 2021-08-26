@@ -24,7 +24,7 @@ class GameStats():
     """
 
     def __init__(self, given_name: str,
-                date_first_added: datetime = None,
+                date_first_played: datetime = None,
                 date_last_played: datetime = None,
                 marked_game: bool = False,
                 times_launched: int = 0 ,
@@ -32,8 +32,8 @@ class GameStats():
 
         self.__GameStats__ = True # metadata to parse JSON file.
         self.name = given_name
-        self.date_first_added: datetime = date_first_added
-        self.date_last_played: datetime = date_last_played
+        self.date_first_played: datetime = date_first_played
+        self.date_last_played:  datetime = date_last_played
         self.marked_game = marked_game
         self.times_launched = times_launched
         self.days_launched = days_launched
@@ -91,10 +91,10 @@ class GameStats():
 
         if dict is not None and  "__GameStats__" in dict:
             last_played_date  =  cls.decode_date(dict["date_last_played"])
-            first_played_date =  cls.decode_date(dict["date_first_added"])
+            first_played_date =  cls.decode_date(dict["date_first_played"])
 
             game_obj = GameStats(given_name = dict["name"],
-                                date_first_added=first_played_date,
+                                date_first_played=first_played_date,
                                 date_last_played=last_played_date,
                                 marked_game=dict["marked_game"],
                                 times_launched=dict["times_launched"],
@@ -161,7 +161,7 @@ class MemberStatsPack():
                 date: A datetime object for init'ing the game object
         """
         game_object = GameStats(given_name=current_game.name,
-                                date_first_added=date,
+                                date_first_played=date,
                                 date_last_played=date,
                                 marked_game=False,
                                 times_launched=1,
