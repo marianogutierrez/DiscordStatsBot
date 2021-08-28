@@ -1,5 +1,8 @@
 # Discord Cog to create custom help commmand for the stats bot.
+
+# Standard Library Imports
 import asyncio
+
 # Third party imports
 import discord
 from discord.ext import commands
@@ -42,6 +45,9 @@ class Help(commands.Cog):
         page_list.append(primary_embed)
 
         # Process each cog:
+        page_number = 0
+        total_pages = len(cog_list)
+
         for cog in cog_list:
             command_text = ""
             for command in self.bot.get_cog(cog).walk_commands():
@@ -49,10 +55,14 @@ class Help(commands.Cog):
                     command_text += (f"❗{command.name}  - {command.description}\n"
                                      "Help Description: " + f"{command.help}\n"
                                      "=====\n")
-            # The Cog's command have been processed, now to add it to the page list.
+            # The Cog's commands have been processed, now to add it to the page list.
             title ="Category: " + str(cog)
             description = command_text
-            page_list.append(discord.Embed(title=title,description=description,inline=False))
+            page_number += 1
+            embed_msg = discord.Embed(title=title,description=description,inline=False)
+            embed_msg.set_footer(text="Page No. " + str(page_number) + "/" + str(total_pages))
+
+            page_list.append(embed_msg)
 
         # Logic to create the pagination inteface below: 
 

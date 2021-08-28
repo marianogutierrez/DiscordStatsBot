@@ -165,6 +165,8 @@ class CoreFunctions(commands.Cog):
                                 color=self.hex_color_code)
 
         embed_msg.set_thumbnail(url = member_ref.avatar_url)
+        embed_msg.set_footer(text="Called for " + member_ref.display_name, 
+                                icon_url=member_ref.avatar_url)
         
         return embed_msg
 
@@ -458,6 +460,9 @@ class CoreFunctions(commands.Cog):
                                 description=descript,
                                 color=self.hex_color_code)
 
+        embed_msg.set_footer(text="Called by " + ctx.author.name, 
+                                icon_url=ctx.author.avatar_url)
+
         mentions = ctx.message.mentions
         member = ctx.author
 
@@ -471,8 +476,6 @@ class CoreFunctions(commands.Cog):
         else:
             descript = "The requested user is not registered."
             embed_msg.description = descript
-            embed_msg.set_footer(text="Called by " + ctx.author.name, 
-                                icon_url=ctx.author.avatar_url)
 
         await ctx.send(embed=embed_msg)
 
