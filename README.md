@@ -33,4 +33,18 @@ ERR_FILE  = os.getenv("LOG_FILE")
 Overall, the user must have a token - thus they have to make their own bot first - a guild to run the bot, and some hardcoded paths on where there JSON and error files will be located.
 Finally, the user should enter the StatsBotPackage, and run `python<3.7 or greater> StatsBot.py`.
 
-## Screenshots:
+## The Bot in Action:
+### The Help Command:
+![Help Command](https://media.giphy.com/media/4Xf0EygOn9tPROTXKc/giphy.gif?cid=790b761116064157663769ed32a90732f88d8d46de9eeb1a&rid=giphy.gif&ct=g)
+
+### Call upon your own stats:
+<img src="https://imgur.com/F8va2vZ.png" width="500">
+
+### Or, call upon a friend's:
+<img src="https://imgur.com/ZJ4tG4K.png" width="500">
+
+### Ask for Random Numbers:
+<img src="https://imgur.com/SATfwe6.png" width="500">
+
+### Notify the server you're playing something you marked!
+<img src="https://imgur.com/FwT5UDL.png" width="500">
